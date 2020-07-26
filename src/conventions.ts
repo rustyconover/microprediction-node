@@ -1,3 +1,8 @@
+import { MemorableUniqueIdentifier } from "memorable-unique-identifier";
+import { API_URL } from "./config";
+import { Key } from "readline";
+import { applyMixins } from "./utils";
+
 const bent = require("bent");
 const getJSON = bent("json");
 
@@ -25,37 +30,32 @@ class HorizonConventions {
   }
 }
 
-import { Muid } from "./muid";
-import { API_URL } from "./config";
-import { Key } from "readline";
-import { applyMixins } from "./utils";
-
 class KeyConventions {
   /** Check if the key is hash-memorable */
   static is_valid_key(key: string): boolean {
-    return Muid.validate(key);
+    return MemorableUniqueIdentifier.validate(key);
   }
 
   // FIXME: implement create_key
   static create_key(difficulty: number = 6): string {
-    return Muid.create(difficulty).key;
+    return MemorableUniqueIdentifier.create(difficulty).key;
   }
 
   static animal_from_key(key: string) {
-    return Muid.animal(key);
+    return MemorableUniqueIdentifier.animal(key);
   }
 
   static key_difficulty(key: string) {
-    return Muid.difficulty(key);
+    return MemorableUniqueIdentifier.difficulty(key);
   }
 
   static shash(key: Buffer) {
-    return Muid.shash(key);
+    return MemorableUniqueIdentifier.shash(key);
   }
 
   /** Return the spirit animal given the public identity (hash of write_key) */
   static animal_from_code(code: string) {
-    return Muid.search(code);
+    return MemorableUniqueIdentifier.search(code);
   }
 
   // FIXME: implement maybe_create_key

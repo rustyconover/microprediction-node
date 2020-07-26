@@ -29,6 +29,7 @@
   "dependencies": {
     "@types/bent": "^7.3.0",
     "bent": "^7.3.7",
+    "memorable-unique-identifier": "^1.0.6",
     "uuid": "^8.2.0"
   }
 }
