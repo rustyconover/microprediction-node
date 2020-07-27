@@ -1,12 +1,9 @@
 import { MemorableUniqueIdentifier } from "memorable-unique-identifier";
-import { API_URL } from "./config";
-import { Key } from "readline";
-import { applyMixins } from "./utils";
 
 const bent = require("bent");
 const getJSON = bent("json");
 
-class SepConventions {
+export class SepConventions {
   static sep() {
     return "::";
   }
@@ -15,7 +12,7 @@ class SepConventions {
   }
 }
 
-class HorizonConventions {
+export class HorizonConventions {
   public readonly delays: number[];
   constructor(delays: number[]) {
     this.delays = delays;
@@ -30,7 +27,7 @@ class HorizonConventions {
   }
 }
 
-class KeyConventions {
+export class KeyConventions {
   /** Check if the key is hash-memorable */
   static is_valid_key(key: string): boolean {
     return MemorableUniqueIdentifier.validate(key);
@@ -61,7 +58,7 @@ class KeyConventions {
   // FIXME: implement maybe_create_key
 }
 
-class LeaderboardConventions {
+export class LeaderboardConventions {
   public readonly LEADERBOARD = `leaderboard${SepConventions.sep()}`;
   public readonly CUSTOM_LEADERBOARD = `custom_leaderboard${SepConventions.sep()}`;
 
@@ -119,7 +116,7 @@ class LeaderboardConventions {
   }
 }
 
-class MiscConventions {
+export class MiscConventions {
   private readonly DELAYED = `delayed${SepConventions.sep()}`;
   private readonly CDF = `cdf${SepConventions.sep()}`;
   private readonly LINKS = `links${SepConventions.sep()}`;
@@ -180,7 +177,7 @@ class MiscConventions {
 
 var cdf = require("@stdlib/stats/base/dists/normal/cdf");
 var Normal = require("@stdlib/stats/base/dists/normal/ctor");
-class StatsConventions {
+export class StatsConventions {
   static normcdf(x: number) {
     return this._normcdf_function()(x);
   }
@@ -243,7 +240,7 @@ class StatsConventions {
 
 const { v4: uuidv4 } = require("uuid");
 
-class StreamConventions {
+export class StreamConventions {
   static sep() {
     return "::";
   }
@@ -264,7 +261,19 @@ class StreamConventions {
   }
 }
 
-class URLConventions {
+/** A configuration that is running on the server */
+export type RemoteConfig = {
+  /** An array of delays for forecasts */
+  delays: number[];
+  /** The minimum balance of the key (FIXME, Peter) */
+  min_balance: number;
+  /** The minimum length of a Muid that is able to .... (FIXME, Peter) */
+  min_len: number;
+  /** The number of predictions (FIXME, Peter) */
+  num_predictions: number;
+};
+
+export class URLConventions {
   private static readonly CONFIG_URL =
     "http://config.microprediction.org/config.json";
   private static readonly FAILOVER_CONFIG_URL =
@@ -281,7 +290,7 @@ class URLConventions {
     return this.FAILOVER_API_URL;
   }
 
-  static async get_config() {
+  static async get_config(): Promise<RemoteConfig> {
     return await getJSON(this.CONFIG_URL);
   }
 }

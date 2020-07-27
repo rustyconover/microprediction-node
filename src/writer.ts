@@ -1,31 +1,48 @@
 const bent = require("bent");
 import qs from "querystring";
-import { API_URL } from "./config";
+import { Config, ConfigPartialOptions, ConfigOptions } from "./config";
 const getJSON = bent("json");
 const put = bent("PUT", 200);
 const deleteHttp = bent("PUT", 200);
 const patch = bent("PATCH", 200);
 
-export class MicroWriter {
-  private readonly base_url: string = API_URL;
-  private readonly write_key: string;
-  constructor(write_key: string, base_url: string | undefined) {
-    if (base_url != null) {
-      this.base_url = base_url;
-    }
+type MicroWriterOptions = ConfigOptions & { write_key: string };
 
-    this.write_key = write_key;
+/** Express the configuration of the MicroWriter,
+ * since a typescript constructor cannot be asynchronous and the
+ * configuration may reach out to a remote server, the config
+ * needs to be created and resolved first then the writer can
+ * be created.
+ */
+export class MicroWriterConfig extends Config {
+  static async create(
+    options: ConfigPartialOptions & { write_key: string }
+  ): Promise<MicroWriterOptions> {
+    return {
+      ...(await Config.create(options)),
+      write_key: options.write_key,
+    };
+  }
+}
+
+export class MicroWriter {
+  private readonly config: MicroWriterOptions;
+
+  constructor(config: MicroWriterOptions) {
+    this.config = config;
   }
 
   async get_home() {
-    return await getJSON(`${this.base_url}/live/${this.write_key}`);
+    return await getJSON(
+      `${this.config.base_url}/live/${this.config.write_key}`
+    );
   }
 
   /** Create or update a stream */
   async set(name: string, value: number) {
     const res = await put(
-      `${this.base_url}/live/${name}?${qs.encode({
-        write_key: this.write_key,
+      `${this.config.base_url}/live/${name}?${qs.encode({
+        write_key: this.config.write_key,
         value,
       })}`
     );
@@ -37,42 +54,52 @@ export class MicroWriter {
   async cset(names: string[], values: number[]) {
     const body = {
       names: names.join(","),
-      write_key: this.write_key,
+      write_key: this.config.write_key,
       values: values.join(","),
     };
-    return await put(`${this.base_url}/copuls/?${qs.encode(body)}`);
+    return await put(`${this.config.base_url}/copuls/?${qs.encode(body)}`);
   }
 
   async touch(name: string) {
     const res = await patch(
-      `${this.base_url}/live/${name}?${qs.encode({
-        write_key: this.write_key,
+      `${this.config.base_url}/live/${name}?${qs.encode({
+        write_key: this.config.write_key,
       })}`
     );
     return res;
   }
 
   async get_errors() {
-    return await getJSON(`${this.base_url}/errors/${this.write_key}`);
+    return await getJSON(
+      `${this.config.base_url}/errors/${this.config.write_key}`
+    );
   }
 
   /** Clear log of errors */
   async delete_errors() {
-    return await deleteHttp(`${this.base_url}/errors/${this.write_key}`);
+    return await deleteHttp(
+      `${this.config.base_url}/errors/${this.config.write_key}`
+    );
   }
 
   /** Retrieve private log information */
   async get_warnings() {
-    return await getJSON(`${this.base_url}/warnings/${this.write_key}`);
+    return await getJSON(
+      `${this.config.base_url}/warnings/${this.config.write_key}`
+    );
   }
 
   /** Clear warnings */
   async delete_warnings() {
-    return await deleteHttp(`${this.base_url}/warnings/${this.write_key}`);
+    return await deleteHttp(
+      `${this.config.base_url}/warnings/${this.config.write_key}`
+    );
   }
 
   async get_balance() {
-    return await getJSON(`${this.base_url}/balance/${this.write_key}`);
+    return await getJSON(
+      `${this.config.base_url}/balance/${this.config.write_key}`
+    );
   }
 
   /** Transfer some balance into the write_key by reducing balance of source key */
@@ -81,7 +108,7 @@ export class MicroWriter {
       throw new Error("Amount must be > 0");
     }
     return await put(
-      `${this.base_url}/balance/${this.write_key}?${qs.encode({
+      `${this.config.base_url}/balance/${this.config.write_key}?${qs.encode({
         source_write_key,
         amount,
       })}`
@@ -93,8 +120,8 @@ export class MicroWriter {
       throw new Error("Amount must be > 0");
     }
     return await put(
-      `${this.base_url}/balance/${recipient_write_key}?${qs.encode({
-        source_write_key: this.write_key,
+      `${this.config.base_url}/balance/${recipient_write_key}?${qs.encode({
+        source_write_key: this.config.write_key,
         amount,
       })}`
     );
@@ -104,7 +131,9 @@ export class MicroWriter {
   // FIXME: restore_balance_by_mining
 
   async get_confirms() {
-    const result = await getJSON(`${this.base_url}/confirms/${this.write_key}`);
+    const result = await getJSON(
+      `${this.config.base_url}/confirms/${this.config.write_key}`
+    );
     return result.map((v: string) => JSON.parse(v));
   }
 
@@ -145,7 +174,7 @@ export class MicroWriter {
 
   async get_transactions(with_epoch: boolean) {
     const result: Array<[string, any]> = await getJSON(
-      `${this.base_url}/transactions/${this.write_key}`
+      `${this.config.base_url}/transactions/${this.config.write_key}`
     );
     const values = result.map((v) => v[1]);
     if (with_epoch) {
@@ -165,18 +194,22 @@ export class MicroWriter {
   }
 
   async get_active() {
-    const result = await getJSON(`${this.base_url}/active/${this.write_key}`);
+    const result = await getJSON(
+      `${this.config.base_url}/active/${this.config.write_key}`
+    );
     return result.map((v: string) => JSON.parse(v));
   }
 
   async get_performance() {
-    const result = await getJSON(`${this.base_url}/active/${this.write_key}`);
+    const result = await getJSON(
+      `${this.config.base_url}/active/${this.config.write_key}`
+    );
     return result.map((v: string) => JSON.parse(v));
   }
 
   async delete_performance() {
     const result = await deleteHttp(
-      `${this.base_url}/performance/${this.write_key}`
+      `${this.config.base_url}/performance/${this.config.write_key}`
     );
     return result.map((v: string) => JSON.parse(v));
   }
@@ -188,16 +221,16 @@ export class MicroWriter {
         "You need to supply a delay parameter to submit a prediction scenario."
       );
     }
-    if (values.length !== this.num_predictions) {
+    if (values.length !== this.config.num_predictions) {
       throw new Error(
         "The number of predictions supplies does not match the needed amount"
       );
     }
     const comma_sep_values = values.join(",");
     await put(
-      `${this.base_url}/submit/${name}?${qs.encode({
+      `${this.config.base_url}/submit/${name}?${qs.encode({
         delay,
-        write_key: this.write_key,
+        write_key: this.config.write_key,
         values: comma_sep_values,
       })}`
     );
@@ -215,8 +248,8 @@ export class MicroWriter {
     if (Array.isArray(delays)) {
       for (const delay in delays) {
         await deleteHttp(
-          `${this.base_url}/submit/${name}?${qs.encode({
-            write_key: this.write_key,
+          `${this.config.base_url}/submit/${name}?${qs.encode({
+            write_key: this.config.write_key,
             delay,
           })}`
         );
