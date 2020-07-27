@@ -6,7 +6,7 @@ const put = bent("PUT", 200);
 const deleteHttp = bent("PUT", 200);
 const patch = bent("PATCH", 200);
 
-type MicroWriterOptions = ConfigOptions & { write_key: string };
+export type MicroWriterOptions = ConfigOptions & { write_key: string };
 
 /** Express the configuration of the MicroWriter,
  * since a typescript constructor cannot be asynchronous and the
@@ -32,16 +32,23 @@ export class MicroWriter {
     this.config = config;
   }
 
-  async get_home() {
-    return await getJSON(
-      `${this.config.base_url}/live/${this.config.write_key}`
-    );
+  /**
+   * Retrieve value or derived value
+   *
+   * Stream name can be the live data name, for example name=cop.json.
+   * Alternatively\nname can be prefixed, such as
+   * lagged_values::cop.json or delayed::70::cop.json
+   *
+   * @param stream_name The stream name
+   */
+  async get_stream(stream_name: string) {
+    return await getJSON(`${this.config.base_url}/live/${stream_name}`);
   }
 
   /** Create or update a stream */
-  async set(name: string, value: number) {
+  async set(stream_name: string, value: number) {
     const res = await put(
-      `${this.config.base_url}/live/${name}?${qs.encode({
+      `${this.config.base_url}/live/${stream_name}?${qs.encode({
         write_key: this.config.write_key,
         value,
       })}`
@@ -60,9 +67,30 @@ export class MicroWriter {
     return await put(`${this.config.base_url}/copuls/?${qs.encode(body)}`);
   }
 
-  async touch(name: string) {
+  /**
+   * Delete a stream
+   * Deletes the stream and also deletes the derived quantities.
+   *
+   * @param stream_name The stream name
+   */
+  async delete_stream(stream_name: string) {
+    const res = await deleteHttp(
+      `${this.config.base_url}/live/${stream_name}?${qs.encode({
+        write_key: this.config.write_key,
+      })}`
+    );
+    return res;
+  }
+
+  /**
+   * Modify the time to live
+   * Prevents a stream with no recent updates from being deleted.
+   *
+   * @param stream_name The stream name
+   */
+  async touch(stream_name: string) {
     const res = await patch(
-      `${this.config.base_url}/live/${name}?${qs.encode({
+      `${this.config.base_url}/live/${stream_name}?${qs.encode({
         write_key: this.config.write_key,
       })}`
     );
@@ -71,7 +99,7 @@ export class MicroWriter {
 
   async get_errors() {
     return await getJSON(
-      `${this.config.base_url}/errors/${this.config.write_key}`
+      `${this.config.base_url}/errors/${this.config.write_key}/`
     );
   }
 
@@ -85,7 +113,7 @@ export class MicroWriter {
   /** Retrieve private log information */
   async get_warnings() {
     return await getJSON(
-      `${this.config.base_url}/warnings/${this.config.write_key}`
+      `${this.config.base_url}/warnings/${this.config.write_key}/`
     );
   }
 
@@ -96,7 +124,10 @@ export class MicroWriter {
     );
   }
 
-  async get_balance() {
+  /** Retrieve the balance associated with a write key
+   * @returns number The balance
+   */
+  async get_balance(): Promise<number> {
     return await getJSON(
       `${this.config.base_url}/balance/${this.config.write_key}`
     );
@@ -200,6 +231,7 @@ export class MicroWriter {
     return result.map((v: string) => JSON.parse(v));
   }
 
+  /** List all horizons and whether there is an active submission */
   async get_performance() {
     const result = await getJSON(
       `${this.config.base_url}/active/${this.config.write_key}`

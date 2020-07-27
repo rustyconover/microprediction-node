@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "test": "mocha -r ts-node/register test/test.ts",
+    "test": "mocha -t 15000 -r ts-node/register test/test.ts",
     "prepublish": "tsc"
   },
   "repository": {
@@ -27,6 +27,7 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
+    "@stdlib/stdlib": "0.0.92",
     "@types/bent": "^7.3.0",
     "bent": "^7.3.7",
     "memorable-unique-identifier": "^1.0.6",
