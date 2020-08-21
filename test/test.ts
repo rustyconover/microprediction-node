@@ -1,17 +1,22 @@
 import { expect } from "chai";
 import "mocha";
-import { MicroWriter, MicroWriterConfig } from "../src/writer";
+import {
+  MicroWriter,
+  MicroWriterConfig,
+  MicroWriterOptions,
+} from "../src/writer";
 import { start } from "repl";
 
 // An example write key.
-const write_key = "8b668ca3c6c30b8c28e76874b4222e6e";
+const write_key = "82457d14c37df7043cb5d6c0b53bdb30";
 
 describe("MicroWriter", () => {
   const test_stream_name = `node-${Date.now()}.json`;
 
   let writer: MicroWriter;
+  let config: MicroWriterOptions;
   before(async () => {
-    const config = await MicroWriterConfig.create({
+    config = await MicroWriterConfig.create({
       write_key: write_key,
     });
     writer = new MicroWriter(config);
@@ -58,7 +63,6 @@ describe("MicroWriter", () => {
     const stream_name = `node1-${Date.now()}`;
     const value = Math.random();
     await writer.set(stream_name, value);
-    console.error("Created stream");
 
     const result = await writer.delete_stream(stream_name);
 
@@ -70,7 +74,7 @@ describe("MicroWriter", () => {
 
     const other_key = "3f06e5b0d027fb4e33a5207dd112892e";
 
-    const amount = 500000;
+    const amount = 5;
     const transfer = await writer.put_balance(other_key, amount);
     expect(transfer).to.equal(1);
 
@@ -95,7 +99,6 @@ describe("MicroWriter", () => {
     const confirms = await writer.get_confirms();
     expect(confirms).to.not.be.undefined;
     expect(Array.isArray(confirms)).to.be.true;
-    expect(confirms.length).to.be.greaterThan(0);
   });
 
   it("should be able to return transactions", async () => {
@@ -103,5 +106,43 @@ describe("MicroWriter", () => {
     expect(transactions).to.not.be.undefined;
     expect(Array.isArray(transactions)).to.be.true;
     expect(transactions.length).to.be.greaterThan(0);
+  });
+
+  it("should be able to return active submissions", async () => {
+    const submissions = await writer.get_active();
+    expect(submissions).to.not.be.undefined;
+  });
+
+  it("should return your performance", async () => {
+    const result = await writer.get_performance();
+    expect(typeof result).to.equal("object");
+  });
+
+  it("should be able to delete performance", async () => {
+    await writer.delete_performance();
+  });
+
+  it("should be able to submit a prediction", async () => {
+    const needed_predictions = config.num_predictions;
+    const samples_from_predictive_distribution = [];
+    for (let i = 0; i < needed_predictions; i++) {
+      samples_from_predictive_distribution.push(42);
+    }
+
+    await writer.submit(
+      test_stream_name,
+      samples_from_predictive_distribution,
+      config.delays[0]
+    );
+  });
+
+  it("should be able to return active submissions", async () => {
+    const submissions = await writer.get_active();
+    expect(submissions).to.not.be.undefined;
+    expect(submissions.length).to.be.greaterThan(0);
+  });
+
+  it("should be able to cancel a prediction", async () => {
+    await writer.cancel(test_stream_name, [config.delays[0]]);
   });
 });

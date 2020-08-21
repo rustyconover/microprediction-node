@@ -4,6 +4,8 @@ import { Config, ConfigPartialOptions, ConfigOptions } from "./config";
 const getJSON = bent("json");
 const put = bent("PUT", 200);
 const deleteHttp = bent("DELETE", 308);
+const deleteAny = bent("DELETE");
+
 const patch = bent("PATCH", 200);
 
 export type MicroWriterOptions = ConfigOptions & { write_key: string };
@@ -14,7 +16,7 @@ export type Confirmation = {
   /** The unix based epoch time of the confirmation */
   epoch_time: number;
   /** The operation that was confirmed */
-  operation: string;
+  operation: "withdraw" | "cancel" | "submit" | "set";
   /** The stream name */
   name?: string;
   count?: number;
@@ -50,7 +52,8 @@ export type Transaction = {
   reason?: string;
 };
 
-/** Express the configuration of the MicroWriter,
+/**
+ * Express the configuration of the MicroWriter,
  * since a typescript constructor cannot be asynchronous and the
  * configuration may reach out to a remote server, the config
  * needs to be created and resolved first then the writer can
@@ -75,7 +78,7 @@ export class MicroWriter {
   }
 
   /**
-   * Retrieve value or derived value
+   * Retrieve value or derived value from a schema.
    *
    * Stream name can be the live data name, for example name=cop.json.
    * Alternatively\nname can be prefixed, such as
@@ -307,30 +310,45 @@ export class MicroWriter {
     return Date.now() / 1000 - transactions[0].epoch_time;
   }
 
-  async get_active() {
-    const result = await getJSON(
-      `${this.config.base_url}/active/${this.config.write_key}`
-    );
-    return result.map((v: string) => JSON.parse(v));
+  /**
+   * Return active submissions the list of streams that have predictions
+   * that could be judged a a list.
+   */
+  async get_active(): Promise<string[]> {
+    return getJSON(`${this.config.base_url}/active/${this.config.write_key}`);
   }
 
-  /** List all horizons and whether there is an active submission */
-  async get_performance() {
-    const result = await getJSON(
-      `${this.config.base_url}/active/${this.config.write_key}`
-    );
-    return result.map((v: string) => JSON.parse(v));
-  }
-
-  async delete_performance() {
-    const result = await deleteHttp(
+  /**
+   * List all horizons and whether there is an active submission
+   *
+   * A dictionary that contains our cumulative performance.
+   *
+   */
+  async get_performance(): Promise<{}> {
+    return getJSON(
       `${this.config.base_url}/performance/${this.config.write_key}`
     );
-    return result.map((v: string) => JSON.parse(v));
   }
 
-  /** Submit a prediction scenerio */
-  async submit(name: string, values: number[], delay: number | undefined) {
+  async delete_performance(): Promise<number> {
+    const result = await deleteAny(
+      `${this.config.base_url}/performance/${this.config.write_key}`
+    );
+    return result.json();
+  }
+
+  /** Submit a prediction scenerio
+   *
+   * @param name The name of the stream where the submission should be sent
+   * @param values The predicted values
+   * @param delay The delay horizon of the prediction
+   *
+   */
+  async submit(
+    name: string,
+    values: number[],
+    delay: number | undefined
+  ): Promise<boolean> {
     if (delay == null) {
       throw new Error(
         "You need to supply a delay parameter to submit a prediction scenario."
@@ -338,20 +356,36 @@ export class MicroWriter {
     }
     if (values.length !== this.config.num_predictions) {
       throw new Error(
-        "The number of predictions supplies does not match the needed amount"
+        `The number of predictions supplied does not match the needed amount.  Needs ${this.config.num_predictions}, was supplied with ${values.length}`
       );
     }
     const comma_sep_values = values.join(",");
-    await put(
+    const result = await put(
       `${this.config.base_url}/submit/${name}?${qs.encode({
         delay,
         write_key: this.config.write_key,
         values: comma_sep_values,
       })}`
     );
+
+    if (result.status === 200) {
+      return result.json();
+    } else if (result.status === 403) {
+      throw new Error("Unable to add prediction, permission denied.");
+    } else {
+      throw new Error(
+        "There was an error submitting your prediction, check the error log"
+      );
+    }
   }
 
-  /** Cancel a prediction scenerio */
+  /**
+   * Cancel a previously submitted prediction.
+   *
+   * @param name The stream name
+   * @delay delays The delays of which to cancel
+   *
+   */
   async cancel(name: string, delays: number | number[] | undefined) {
     if (delays == null) {
       throw new Error("Must pass a delay to cancel");
@@ -362,12 +396,15 @@ export class MicroWriter {
 
     if (Array.isArray(delays)) {
       for (const delay in delays) {
-        await deleteHttp(
+        const response = await deleteAny(
           `${this.config.base_url}/submit/${name}?${qs.encode({
             write_key: this.config.write_key,
             delay,
           })}`
         );
+        if (response.status !== 200) {
+          throw new Error("Failed to cancel a submission");
+        }
       }
     }
   }
