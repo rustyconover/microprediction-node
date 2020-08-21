@@ -1,12 +1,54 @@
 const bent = require("bent");
-import qs from "querystring";
+import qs, { stringify } from "querystring";
 import { Config, ConfigPartialOptions, ConfigOptions } from "./config";
 const getJSON = bent("json");
 const put = bent("PUT", 200);
-const deleteHttp = bent("PUT", 200);
+const deleteHttp = bent("DELETE", 308);
 const patch = bent("PATCH", 200);
 
 export type MicroWriterOptions = ConfigOptions & { write_key: string };
+
+export type Confirmation = {
+  /** The time of the confirmation */
+  time: string;
+  /** The unix based epoch time of the confirmation */
+  epoch_time: number;
+  /** The operation that was confirmed */
+  operation: string;
+  /** The stream name */
+  name?: string;
+  count?: number;
+  execution?: boolean;
+  delays: Array<number>;
+  some_values: Array<number>;
+  success: boolean;
+  warn: boolean;
+};
+
+export type Transaction = {
+  /** The time the settlement happened */
+  settlement_time: string;
+  /** The time of the transaction since the unix epoch in seconds */
+  epoch_time: number;
+  /** The type of transaction */
+  type: "transfer";
+  /** The public source key of the transaction */
+  source: string;
+  /** The public recipient key of the transactions */
+  recipient: string;
+  /** The maximum amount that this transaction could give */
+  max_to_give: string;
+  /** The maximum amount the source key could receive */
+  max_to_receive: string;
+  /** The amount given */
+  given: string;
+  /** The amount received */
+  received: string;
+  /** A flag that indicates if the transaction was successful. */
+  success: "1" | "0";
+  /** A reason for why the transaction could not be successful */
+  reason?: string;
+};
 
 /** Express the configuration of the MicroWriter,
  * since a typescript constructor cannot be asynchronous and the
@@ -45,16 +87,38 @@ export class MicroWriter {
     return await getJSON(`${this.config.base_url}/live/${stream_name}`);
   }
 
-  /** Create or update a stream */
-  async set(stream_name: string, value: number) {
+  /**
+   * Create or set a new value on a stream
+   *
+   * @param stream_name the stream name
+   * @param value the value to add to the stream
+   *
+   * @returns percentiles A average of the percentiles that the
+   * algorithms assign to the data point (according to quarentined
+   * predictions received further back than the delay seconds)
+   */
+  async set(
+    stream_name: string,
+    value: number
+  ): Promise<{
+    percentiles?: {
+      [key: string]: number;
+    };
+  }> {
     const res = await put(
       `${this.config.base_url}/live/${stream_name}?${qs.encode({
         write_key: this.config.write_key,
         value,
       })}`
     );
+    const result = await res.json();
+    if (result.error) {
+      throw new Error(`Failed to call set on a stream, error: ${result.error}`);
+    }
     // It seems this returns a 200 on put, not a 201.
-    return res;
+    return {
+      percentiles: res.percentiles,
+    };
   }
 
   /** Set multiple values linked by copula */
@@ -87,14 +151,15 @@ export class MicroWriter {
    * Prevents a stream with no recent updates from being deleted.
    *
    * @param stream_name The stream name
+   * @returns boolean indicating if the stream was successfully touched.
    */
-  async touch(stream_name: string) {
+  async touch(stream_name: string): Promise<boolean> {
     const res = await patch(
       `${this.config.base_url}/live/${stream_name}?${qs.encode({
         write_key: this.config.write_key,
       })}`
     );
-    return res;
+    return res.json();
   }
 
   async get_errors() {
@@ -124,8 +189,10 @@ export class MicroWriter {
     );
   }
 
-  /** Retrieve the balance associated with a write key
-   * @returns number The balance
+  /**
+   * Retrieve the balance associated with a write key
+   *
+   * @returns number The balance for that key, may be negative.
    */
   async get_balance(): Promise<number> {
     return await getJSON(
@@ -133,37 +200,53 @@ export class MicroWriter {
     );
   }
 
-  /** Transfer some balance into the write_key by reducing balance of source key */
-  async put_balance(source_write_key: string, amount: number) {
+  /**
+   * Transfer some balance into the write_key by reducing balance of source key.
+   * There is a 10% transfer fee deducted from the balance.
+   *
+   * @param source_write_key The key where balance should be transferered
+   * @param amount The amount of balance to transfer.
+   *
+   * @returns number indicate 1 if the transfer was successful.
+   * */
+  async put_balance(source_write_key: string, amount: number): Promise<number> {
     if (amount < 0) {
       throw new Error("Amount must be > 0");
     }
-    return await put(
+    const result = await put(
       `${this.config.base_url}/balance/${this.config.write_key}?${qs.encode({
         source_write_key,
         amount,
       })}`
     );
+    return result.json();
   }
 
+  /**
+   * Donate some balance to a recipient write key.
+   *
+   * @param recipient_write_key The key where the balance should be donated
+   * @param amount The amount of the balance to donate
+   */
   async donate_balance(recipient_write_key: string, amount: number) {
     if (amount < 0) {
       throw new Error("Amount must be > 0");
     }
-    return await put(
+    const result = await put(
       `${this.config.base_url}/balance/${recipient_write_key}?${qs.encode({
         source_write_key: this.config.write_key,
         amount,
       })}`
     );
+    return result.json();
   }
 
   // FIXME: bolster_balance_by_mining
   // FIXME: restore_balance_by_mining
 
-  async get_confirms() {
+  async get_confirms(): Promise<Confirmation[]> {
     const result = await getJSON(
-      `${this.config.base_url}/confirms/${this.config.write_key}`
+      `${this.config.base_url}/confirms/${this.config.write_key}/`
     );
     return result.map((v: string) => JSON.parse(v));
   }
@@ -171,27 +254,27 @@ export class MicroWriter {
   async get_infrequent_confirms() {
     const confirms = await this.get_confirms();
     const common = new Set(["set", "submit"]);
-    return confirms.filter((v: any) => !common.has(v.operation));
+    return confirms.filter((v) => !common.has(v.operation));
   }
 
   async get_withdrawls() {
     const confirms = await this.get_confirms();
-    return confirms.filter((v: any) => v.operation === "withdraw");
+    return confirms.filter((v) => v.operation === "withdraw");
   }
 
   async get_cancellations() {
     const confirms = await this.get_confirms();
-    return confirms.filter((v: any) => v.operation === "cancel");
+    return confirms.filter((v) => v.operation === "cancel");
   }
 
   async get_submissions() {
     const confirms = await this.get_confirms();
-    return confirms.filter((v: any) => v.operation === "submit");
+    return confirms.filter((v) => v.operation === "submit");
   }
 
   async get_set_confirmations() {
     const confirms = await this.get_confirms();
-    return confirms.filter((v: any) => v.operation === "set");
+    return confirms.filter((v) => v.operation === "set");
   }
 
   async get_elasped_since_confirm(): Promise<number | undefined> {
@@ -203,9 +286,9 @@ export class MicroWriter {
     return Date.now() / 1000 - last;
   }
 
-  async get_transactions(with_epoch: boolean) {
+  async get_transactions(with_epoch: boolean = false): Promise<Transaction[]> {
     const result: Array<[string, any]> = await getJSON(
-      `${this.config.base_url}/transactions/${this.config.write_key}`
+      `${this.config.base_url}/transactions/${this.config.write_key}/`
     );
     const values = result.map((v) => v[1]);
     if (with_epoch) {
