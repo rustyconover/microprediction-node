@@ -231,7 +231,10 @@ export class MicroWriter {
    * @param recipient_write_key The key where the balance should be donated
    * @param amount The amount of the balance to donate
    */
-  async donate_balance(recipient_write_key: string, amount: number) {
+  async donate_balance(
+    recipient_write_key: string,
+    amount: number
+  ): Promise<Transaction> {
     if (amount < 0) {
       throw new Error("Amount must be > 0");
     }

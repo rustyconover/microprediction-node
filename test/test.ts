@@ -5,10 +5,85 @@ import {
   MicroWriterConfig,
   MicroWriterOptions,
 } from "../src/writer";
-import { start } from "repl";
+
+import {
+  MicroReader,
+  MicroReaderOptions,
+  MicroReaderConfig,
+} from "../src/reader";
 
 // An example write key.
 const write_key = "82457d14c37df7043cb5d6c0b53bdb30";
+
+describe("MicroReader", () => {
+  let reader: MicroReader;
+  let config: MicroReaderOptions;
+  const test_stream_name = "South_Australia_Electricity_Price.json";
+  before(async () => {
+    config = await MicroReaderConfig.create({});
+    reader = new MicroReader(config);
+  });
+
+  it("should be able to return the current value from a stream", async () => {
+    const result = await reader.get_current_value(test_stream_name);
+    expect(result).to.not.be.undefined;
+  });
+
+  it("should be able to retrieve a leaderboard ", async () => {
+    for (const delay of config.delays) {
+      const result = await reader.get_leaderboard(test_stream_name, delay);
+      expect(result).to.not.be.undefined;
+      expect(typeof result).to.equal("object");
+    }
+  });
+
+  it("should be able to retrieve the overall leaderboard", async () => {
+    const result = await reader.get_overall();
+    expect(result).to.not.be.undefined;
+    expect(Object.keys(result).length).to.be.greaterThan(0);
+  });
+
+  it("should be able to retrieve the sponsors", async () => {
+    const result = await reader.get_sponsors();
+    expect(result).to.not.be.undefined;
+    expect(Object.keys(result).length).to.be.greaterThan(0);
+  });
+
+  it("should be able to retreive all of the budgets for streams", async () => {
+    const result = await reader.get_budgets();
+    expect(result).to.not.be.undefined;
+    expect(Object.keys(result).length).to.be.greaterThan(0);
+  });
+
+  it("should be able get the summary for a stream ", async () => {
+    const result = await reader.get_summary(test_stream_name);
+    expect(result.delays).to.not.be.undefined;
+    expect(result.latest_value).to.not.be.undefined;
+    expect(result.lagged_values).to.not.be.undefined;
+    expect(Array.isArray(result.lagged_times)).to.be.true;
+    expect(Array.isArray(result.lagged_values)).to.be.true;
+  });
+
+  it("should be able to retrieve lagged values", async () => {
+    const result = await reader.get_lagged_values(test_stream_name);
+    expect(result).to.not.be.undefined;
+    expect(Array.isArray(result)).to.be.true;
+  });
+
+  it("should be able to retrieve lagged times", async () => {
+    const result = await reader.get_lagged_times(test_stream_name);
+    expect(result).to.not.be.undefined;
+    expect(Array.isArray(result)).to.be.true;
+  });
+
+  it("should be able to retrieve a delayed value", async () => {
+    const result = await reader.get_delayed_value(
+      test_stream_name,
+      config.delays[0]
+    );
+    expect(result).to.not.be.undefined;
+  });
+});
 
 describe("MicroWriter", () => {
   const test_stream_name = `node-${Date.now()}.json`;
@@ -89,7 +164,7 @@ describe("MicroWriter", () => {
 
     const amount = 5;
     const result = await writer.donate_balance(other_key, amount);
-    expect(result).to.equal(1);
+    expect(result.type).to.equal("transfer");
 
     const ending_balance = await writer.get_balance();
     expect(Math.round(starting_balance - ending_balance)).to.equal(amount);
