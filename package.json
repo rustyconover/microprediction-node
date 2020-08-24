@@ -1,7 +1,7 @@
 {
-  "name": "microprediction-client",
+  "name": "microprediction",
   "version": "1.0.1",
-  "description": "A TypeScript client for microprediction",
+  "description": "A client for microprediction.org",
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && tsc",
