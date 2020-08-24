@@ -1,6 +1,6 @@
 # Microprediction for TypeScript/Node.js
 
-An implementation of a [Microprediction.org](https://microprediction.org) client in TypeScript/Node.js.
+An implementation of a [Microprediction.org](https://microprediction.org) client using TypeScript and Node.js.
 
 ## Installation
 

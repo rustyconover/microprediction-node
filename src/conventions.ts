@@ -282,6 +282,8 @@ export class URLConventions {
   private static readonly FAILOVER_API_URL =
     "http://stableapi.microprediction.org";
 
+  private static _cached_config: Promise<RemoteConfig> | undefined;
+
   static api_url() {
     return this.API_URL;
   }
@@ -291,6 +293,11 @@ export class URLConventions {
   }
 
   static async get_config(): Promise<RemoteConfig> {
-    return await getJSON(this.CONFIG_URL);
+    if (this._cached_config != null) {
+      return this._cached_config;
+    }
+
+    this._cached_config = getJSON(this.CONFIG_URL);
+    return this._cached_config as Promise<RemoteConfig>;
   }
 }

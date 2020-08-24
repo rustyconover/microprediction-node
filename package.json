@@ -1,6 +1,6 @@
 {
   "name": "microprediction",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A client for microprediction.org",
   "main": "dist/index.js",
   "scripts": {

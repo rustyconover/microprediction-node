@@ -122,13 +122,13 @@ describe("MicroWriter", () => {
     await writer.delete_errors();
   });
 
-  it.skip("should be able to write to a stream", async () => {
+  it("should be able to write to a stream", async () => {
     const stream_name = test_stream_name;
     const value = Math.random();
     await writer.set(stream_name, value);
   });
 
-  it.skip("should be able to touch a stream", async () => {
+  it("should be able to touch a stream", async () => {
     const result = await writer.touch(test_stream_name);
 
     expect(result).to.equal(true);
@@ -144,14 +144,14 @@ describe("MicroWriter", () => {
     expect(result).to.equal(5);
   });
 
-  it.skip("should be able to transfer balances between keys", async () => {
+  it("should be able to transfer balances between keys", async () => {
     const starting_balance = await writer.get_balance();
 
     const other_key = "3f06e5b0d027fb4e33a5207dd112892e";
 
     const amount = 5;
     const transfer = await writer.put_balance(other_key, amount);
-    expect(transfer).to.equal(1);
+    expect(transfer.type).to.equal("transfer");
 
     const ending_balance = await writer.get_balance();
     expect(ending_balance - starting_balance).to.equal(amount * 0.9);

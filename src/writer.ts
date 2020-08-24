@@ -212,7 +212,10 @@ export class MicroWriter {
    *
    * @returns number indicate 1 if the transfer was successful.
    * */
-  async put_balance(source_write_key: string, amount: number): Promise<number> {
+  async put_balance(
+    source_write_key: string,
+    amount: number
+  ): Promise<Transaction> {
     if (amount < 0) {
       throw new Error("Amount must be > 0");
     }
