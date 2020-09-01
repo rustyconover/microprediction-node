@@ -133,6 +133,16 @@ export class MicroReader {
   }
 
   /**
+   * Retrieve lagged times and values of a stream
+   *
+   * @param stream_name The stream name
+   *
+   */
+  async get_lagged(stream_name: string): Promise<Array<[number, number]>> {
+    return await getJSON(`${this.config.base_url}/lagged/${stream_name}`);
+  }
+
+  /**
    * Retrieve lagged values of a time series
    *
    * @param stream_name The stream name
