@@ -81,7 +81,7 @@ export class MicroWriter {
    * Retrieve value or derived value from a schema.
    *
    * Stream name can be the live data name, for example name=cop.json.
-   * Alternatively\nname can be prefixed, such as
+   * Alternatively name can be prefixed, such as
    * lagged_values::cop.json or delayed::70::cop.json
    *
    * @param stream_name The stream name

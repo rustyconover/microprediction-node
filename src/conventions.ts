@@ -265,11 +265,13 @@ export class StreamConventions {
 export type RemoteConfig = {
   /** An array of delays for forecasts */
   delays: number[];
-  /** The minimum balance of the key (FIXME, Peter) */
+  /** The minimum balance of the key */
   min_balance: number;
-  /** The minimum length of a Muid that is able to .... (FIXME, Peter) */
+  /** The minimum length of a Muid that is able to write  */
   min_len: number;
-  /** The number of predictions (FIXME, Peter) */
+  /** The number of predictions to supply which are sampled from
+   * the distribution.
+   */
   num_predictions: number;
 };
 

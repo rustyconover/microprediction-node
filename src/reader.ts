@@ -49,17 +49,19 @@ export class MicroReader {
   /**
    * Return the leaderboard for a stream at a particular delay
    *
-   * @param name The name of the stream
+   * @param stream_name The name of the stream
    * @param delay The delay used for the leaderboard.
    *
    * @returns An object containing the current score for each identity on the leaderboard.
    */
   async get_leaderboard(
-    name: string,
+    stream_name: string,
     delay: number
   ): Promise<{ [name: string]: number }> {
     return await getJSON(
-      `${this.config.base_url}/leaderboards/${name}?${qs.encode({ delay })}`
+      `${this.config.base_url}/leaderboards/${stream_name}?${qs.encode({
+        delay,
+      })}`
     );
   }
 
