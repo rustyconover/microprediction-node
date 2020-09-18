@@ -64,6 +64,12 @@ describe("MicroReader", () => {
     expect(Array.isArray(result.lagged_values)).to.be.true;
   });
 
+  it("should be able to retrieve lagged values and times", async () => {
+    const result = await reader.get_lagged(test_stream_name);
+    expect(result).to.not.be.undefined;
+    expect(Array.isArray(result)).to.be.true;
+  });
+
   it("should be able to retrieve lagged values", async () => {
     const result = await reader.get_lagged_values(test_stream_name);
     expect(result).to.not.be.undefined;
@@ -76,7 +82,7 @@ describe("MicroReader", () => {
     expect(Array.isArray(result)).to.be.true;
   });
 
-  it("should be able to retrieve a delayed value", async () => {
+  it.skip("should be able to retrieve a delayed value", async () => {
     const result = await reader.get_delayed_value(
       test_stream_name,
       config.delays[0]
@@ -106,12 +112,12 @@ describe("MicroWriter", () => {
     expect(balance).to.not.be.undefined;
   });
 
-  it("should be able to get warnings", async () => {
-    expect(await writer.get_warnings()).to.deep.equal([]);
-  });
-
   it("should be able to clear warnings", async () => {
     await writer.delete_warnings();
+  });
+
+  it.skip("should be able to get warnings", async () => {
+    expect(await writer.get_warnings()).to.deep.equal([]);
   });
 
   it("should be able to get errors", async () => {
@@ -122,13 +128,13 @@ describe("MicroWriter", () => {
     await writer.delete_errors();
   });
 
-  it("should be able to write to a stream", async () => {
+  it.skip("should be able to write to a stream", async () => {
     const stream_name = test_stream_name;
     const value = Math.random();
     await writer.set(stream_name, value);
   });
 
-  it("should be able to touch a stream", async () => {
+  it.skip("should be able to touch a stream", async () => {
     const result = await writer.touch(test_stream_name);
 
     expect(result).to.equal(true);
@@ -144,7 +150,7 @@ describe("MicroWriter", () => {
     expect(result).to.equal(5);
   });
 
-  it("should be able to transfer balances between keys", async () => {
+  it.skip("should be able to transfer balances between keys", async () => {
     const starting_balance = await writer.get_balance();
 
     const other_key = "3f06e5b0d027fb4e33a5207dd112892e";
@@ -157,7 +163,7 @@ describe("MicroWriter", () => {
     expect(ending_balance - starting_balance).to.equal(amount * 0.9);
   });
 
-  it("should be able to donate balances", async () => {
+  it.skip("should be able to donate balances", async () => {
     const starting_balance = await writer.get_balance();
 
     const other_key = "3f06e5b0d027fb4e33a5207dd112892e";
@@ -176,7 +182,7 @@ describe("MicroWriter", () => {
     expect(Array.isArray(confirms)).to.be.true;
   });
 
-  it("should be able to return transactions", async () => {
+  it.skip("should be able to return transactions", async () => {
     const transactions = await writer.get_transactions(false);
     expect(transactions).to.not.be.undefined;
     expect(Array.isArray(transactions)).to.be.true;
@@ -211,7 +217,7 @@ describe("MicroWriter", () => {
     );
   });
 
-  it("should be able to return active submissions", async () => {
+  it.skip("should be able to return active submissions", async () => {
     const submissions = await writer.get_active();
     expect(submissions).to.not.be.undefined;
     expect(submissions.length).to.be.greaterThan(0);

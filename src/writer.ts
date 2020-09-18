@@ -116,7 +116,9 @@ export class MicroWriter {
     );
     const result = await res.json();
     if (result.error) {
-      throw new Error(`Failed to call set on a stream, error: ${result.error}`);
+      throw new Error(
+        `Failed to call set on a stream (stream_name: ${stream_name}, value: ${value}) error: ${result.error}`
+      );
     }
     // It seems this returns a 200 on put, not a 201.
     return {
@@ -317,8 +319,8 @@ export class MicroWriter {
   }
 
   /**
-   * Return active submissions the list of streams that have predictions
-   * that could be judged a a list.
+   * Return active submissions which have predictions that
+   * can be judged.
    */
   async get_active(): Promise<string[]> {
     return getJSON(`${this.config.base_url}/active/${this.config.write_key}`);
@@ -345,13 +347,13 @@ export class MicroWriter {
 
   /** Submit a prediction scenerio
    *
-   * @param name The name of the stream where the submission should be sent
+   * @param stream_name The name of the stream where the submission should be sent
    * @param values The predicted values
    * @param delay The delay horizon of the prediction
    *
    */
   async submit(
-    name: string,
+    stream_name: string,
     values: number[],
     delay: number | undefined
   ): Promise<boolean> {
@@ -367,7 +369,7 @@ export class MicroWriter {
     }
     const comma_sep_values = values.join(",");
     const result = await put(
-      `${this.config.base_url}/submit/${name}?${qs.encode({
+      `${this.config.base_url}/submit/${stream_name}?${qs.encode({
         delay,
         write_key: this.config.write_key,
         values: comma_sep_values,
