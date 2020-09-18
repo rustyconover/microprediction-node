@@ -175,68 +175,68 @@ export class MiscConventions {
   }
 }
 
-var cdf = require("@stdlib/stats/base/dists/normal/cdf");
-var Normal = require("@stdlib/stats/base/dists/normal/ctor");
-export class StatsConventions {
-  static normcdf(x: number) {
-    return this._normcdf_function()(x);
-  }
+//var cdf = require("@stdlib/stats/base/dists/normal/cdf");
+//var Normal = require("@stdlib/stats/base/dists/normal/ctor");
+// export class StatsConventions {
+//   static normcdf(x: number) {
+//     return this._normcdf_function()(x);
+//   }
 
-  static norminv(p: number) {
-    return cdf(p, 0, 1);
-  }
+//   static norminv(p: number) {
+//     return cdf(p, 0, 1);
+//   }
 
-  // FIXME
-  static _norminv_function() {
-    // FIXME: implement this.
-    throw new Error("Implement inv_cdf");
-  }
+//   // FIXME
+//   static _norminv_function() {
+//     // FIXME: implement this.
+//     throw new Error("Implement inv_cdf");
+//   }
 
-  static _normcdf_function() {
-    return (x: number) => cdf(x, 0, 1);
-  }
+//   static _normcdf_function() {
+//     return (x: number) => cdf(x, 0, 1);
+//   }
 
-  static zmean_percentile(ps: number[]) {
-    if (ps.length === 0) {
-      return 0.5;
-    }
-    const zscores = ps.map((p) => StatsConventions.norminv(p));
-    const nonNan = ps.filter((p) => !Number.isNaN(p));
-    const avg_zscore = nonNan.reduce((a, c) => a + c, 0) / nonNan.length;
-    return this.normcdf(avg_zscore);
-  }
+//   static zmean_percentile(ps: number[]) {
+//     if (ps.length === 0) {
+//       return 0.5;
+//     }
+//     const zscores = ps.map((p) => StatsConventions.norminv(p));
+//     const nonNan = ps.filter((p) => !Number.isNaN(p));
+//     const avg_zscore = nonNan.reduce((a, c) => a + c, 0) / nonNan.length;
+//     return this.normcdf(avg_zscore);
+//   }
 
-  /** Default x-values for cdf */
-  static percentile_abscissa() {
-    return [
-      -2.3263478740408408,
-      -1.6368267885518997,
-      -1.330561513178897,
-      -1.1146510149326596,
-      -0.941074530352976,
-      -0.792046894425591,
-      -0.6588376927361878,
-      -0.5364223812298266,
-      -0.4215776353171568,
-      -0.3120533220328322,
-      -0.20615905948527324,
-      -0.10253336200497987,
-      0.0,
-      0.10253336200497973,
-      0.20615905948527324,
-      0.31205332203283237,
-      0.4215776353171568,
-      0.5364223812298264,
-      0.6588376927361878,
-      0.7920468944255913,
-      0.941074530352976,
-      1.1146510149326592,
-      1.330561513178897,
-      1.6368267885519001,
-      2.3263478740408408,
-    ];
-  }
-}
+//   /** Default x-values for cdf */
+//   static percentile_abscissa() {
+//     return [
+//       -2.3263478740408408,
+//       -1.6368267885518997,
+//       -1.330561513178897,
+//       -1.1146510149326596,
+//       -0.941074530352976,
+//       -0.792046894425591,
+//       -0.6588376927361878,
+//       -0.5364223812298266,
+//       -0.4215776353171568,
+//       -0.3120533220328322,
+//       -0.20615905948527324,
+//       -0.10253336200497987,
+//       0.0,
+//       0.10253336200497973,
+//       0.20615905948527324,
+//       0.31205332203283237,
+//       0.4215776353171568,
+//       0.5364223812298264,
+//       0.6588376927361878,
+//       0.7920468944255913,
+//       0.941074530352976,
+//       1.1146510149326592,
+//       1.330561513178897,
+//       1.6368267885519001,
+//       2.3263478740408408,
+//     ];
+//   }
+// }
 
 const { v4: uuidv4 } = require("uuid");
 
