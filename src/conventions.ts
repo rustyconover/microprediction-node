@@ -243,12 +243,12 @@ export type RemoteConfig = {
 
 export class URLConventions {
   private static readonly CONFIG_URL =
-    "http://config.microprediction.org/config.json";
+    "https://config.microprediction.org/config.json";
   private static readonly FAILOVER_CONFIG_URL =
-    "http://stableconfig.microprediction.org/config.json";
-  private static readonly API_URL = "http://api.microprediction.org";
+    "https://stableconfig.microprediction.org/config.json";
+  private static readonly API_URL = "https://api.microprediction.org";
   private static readonly FAILOVER_API_URL =
-    "http://stableapi.microprediction.org";
+    "https://stableapi.microprediction.org";
 
   private static _cached_config: Promise<RemoteConfig> | undefined;
 
