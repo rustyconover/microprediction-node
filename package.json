@@ -1,10 +1,12 @@
 {
   "name": "microprediction",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A client for microprediction.org",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
+  "browser": "dist/microprediction.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist lib && tsc && ./node_modules/.bin/webpack -c webpack.config.js",
     "test": "mocha -b -t 15000 -r ts-node/register test/test.ts",
     "prepublish": "tsc"
   },
@@ -12,9 +14,8 @@
     "type": "git",
     "url": "https://github.com/rustyconover/microprediction-node.git"
   },
-  "types": "dist/index.d.ts",
   "keywords": [],
-  "author": "Rusty Conover",
+  "author": "Rusty Conover <rusty@conover.me>",
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.2.11",
@@ -29,7 +30,12 @@
   "dependencies": {
     "@types/bent": "^7.3.0",
     "bent": "^7.3.10",
-    "memorable-unique-identifier": "^1.0.6",
-    "uuid": "^8.3.0"
+    "builtin-modules": "^3.2.0",
+    "crypto-browserify": "^3.12.0",
+    "querystring-es3": "^0.2.1",
+    "ts-loader": "^8.0.12",
+    "uuid": "^8.3.0",
+    "webpack": "^5.11.0",
+    "webpack-cli": "^4.3.0"
   }
 }

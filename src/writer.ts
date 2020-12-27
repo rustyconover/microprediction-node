@@ -1,5 +1,5 @@
 const bent = require("bent");
-import qs, { stringify } from "querystring";
+import qs from "querystring";
 import { Config, ConfigPartialOptions, ConfigOptions } from "./config";
 const getJSON = bent("json");
 const put = bent("PUT", 200);

@@ -2,13 +2,21 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
-    "lib": ["es2017", "es7", "es6", "dom"],
+    "lib": ["es2015", "dom"],
     "declaration": true,
-    "outDir": "dist",
+    "outDir": "lib",
     "noImplicitAny": true,
     "strict": true,
-    "esModuleInterop": true
+    "rootDir": "src",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
   },
-  "include": ["src/**/*"],
+  "files": [
+    "src/index.ts",
+  "src/writer.ts",
+  "src/reader.ts",
+"src/conventions.ts",
+"src/config.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,5 +1,3 @@
-import { MemorableUniqueIdentifier } from "memorable-unique-identifier";
-
 const bent = require("bent");
 const getJSON = bent("json");
 
@@ -25,37 +23,6 @@ export class HorizonConventions {
     const [name, delay] = key.split(SepConventions.sep());
     return [name, parseInt(delay)];
   }
-}
-
-export class KeyConventions {
-  /** Check if the key is hash-memorable */
-  static is_valid_key(key: string): boolean {
-    return MemorableUniqueIdentifier.validate(key);
-  }
-
-  // FIXME: implement create_key
-  static create_key(difficulty: number = 6): string {
-    return MemorableUniqueIdentifier.create(difficulty).key;
-  }
-
-  static animal_from_key(key: string) {
-    return MemorableUniqueIdentifier.animal(key);
-  }
-
-  static key_difficulty(key: string) {
-    return MemorableUniqueIdentifier.difficulty(key);
-  }
-
-  static shash(key: Buffer) {
-    return MemorableUniqueIdentifier.shash(key);
-  }
-
-  /** Return the spirit animal given the public identity (hash of write_key) */
-  static animal_from_code(code: string) {
-    return MemorableUniqueIdentifier.search(code);
-  }
-
-  // FIXME: implement maybe_create_key
 }
 
 export class LeaderboardConventions {
@@ -169,9 +136,8 @@ export class MiscConventions {
   }
 
   cdf_name(name: string, delay: number | undefined) {
-    return `${this.CDF}${
-      delay == null ? name : `${this.CDF}${delay}${SepConventions.sep()}${name}`
-    }`;
+    return `${this.CDF}${delay == null ? name : `${this.CDF}${delay}${SepConventions.sep()}${name}`
+      }`;
   }
 }
 
