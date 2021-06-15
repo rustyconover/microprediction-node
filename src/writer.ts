@@ -356,7 +356,7 @@ export class MicroWriter {
     stream_name: string,
     values: number[],
     delay: number | undefined
-  ): Promise<boolean> {
+  ): Promise<boolean | { error: string }> {
     if (delay == null) {
       throw new Error(
         "You need to supply a delay parameter to submit a prediction scenario."
